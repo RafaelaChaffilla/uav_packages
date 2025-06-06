@@ -1,0 +1,59 @@
+<launch>
+    <arg name="init_x" default="0"/>
+    <arg name="init_y" default="0"/>
+    <arg name="init_z" default="0"/>
+    <arg name="init_th" default="0"/>
+
+    <arg name="robot_name"    default="holybro" />
+
+    <group ns="$(arg robot_name)">
+        <node pkg="tf2_ros" type="static_transform_publisher" name="camera_broadcaster" args="0.085 0.0 -0.11 0 0.707 0 0.707 holybro_v1/base_link camera_link" />
+        <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+            <arg name="color_width" value="640"/>
+            <arg name="color_height" value="480"/>
+            <arg name="color_fps" value="30"/>
+            <arg name="enable_depth" value="false"/>
+        </include>
+
+        <group>
+            <!-- writes position of pattern center in each fiducial frame CORRECTLY-->
+            <node pkg="tf2_ros" type="static_transform_publisher" name="marker946_c_broadcaster" args="-0.082 0.012 0 0 0 0 1 fiducial_946 fiducial_C_946"/>
+            <node pkg="tf2_ros" type="static_transform_publisher" name="marker227_c_broadcaster" args="0.104 -0.073 0 0 0 0 1 fiducial_227 fiducial_C_227"/>
+            <node pkg="tf2_ros" type="static_transform_publisher" name="marker168_c_broadcaster" args="0.134 0.073 0 0 0 0 1 fiducial_168 fiducial_C_168"/>
+            <node pkg="tf2_ros" type="static_transform_publisher" name="marker55_c_broadcaster" args="0.063 0.0855 0 0 0 0 1 fiducial_55 fiducial_C_55"/>
+            <node pkg="tf2_ros" type="static_transform_publisher" name="marker10_c_broadcaster" args="0.039 0.035 0 0 0 0 1 fiducial_10 fiducial_C_10"/>
+        </group> 
+
+        <!-- aruco detector -->
+        <node pkg="aruco_detect" name="aruco_detect" type="aruco_detect" output="screen" respawn="false">
+            <param name="image_transport" value="compressed"/>
+            <param name="publish_images" value="true" />
+            <param name="dictionary" value="3"/>
+            <param name="do_pose_estimation" value="true"/>
+            <param name="vis_msgs" value="false"/>
+            <param name="fiducial_len_override" value="0-50:0.0245, 51-100:0.0535, 101-200:0.075, 201-300:0.131, 901-1000:0.184"/>
+            <remap from="camera/compressed" to="camera/color/image_raw/compressed" />
+            <remap from="camera_info" to="camera/color/camera_info" />
+        </node>
+
+        <node pkg="pose_from_aruco" name="pose_from_aruco" type="pose_from_aruco_v6_gps.py" output="screen">
+            <param name="init_x" value="$(arg init_x)" />
+            <param name="init_y" value="$(arg init_y)" />
+	        <param name="camera_frame" value="camera_color_optical_frame" />	
+            <param name="ugv_pose_topic" value="rovid/ekf_ugv" />
+        </node>
+
+        <node pkg="pose_from_aruco" name="ugv_substitute" type="ugv_substitute_publisher.py" output="screen">
+            <param name="init_x" value="$(arg init_x)" />
+            <param name="init_y" value="$(arg init_y)" />
+            <param name="ugv_pose_topic" value="rovid/ekf_ugv" />
+        </node>
+
+        <node pkg="command_uav" name="set_flight_mode" type="set_mode_srv.py" output="screen">
+            <param name="init_x" value="$(arg init_x)" />
+            <param name="init_y" value="$(arg init_y)" />
+        </node>
+
+    </group>
+
+</launch>

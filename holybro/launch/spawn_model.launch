@@ -1,0 +1,18 @@
+<launch>
+    <arg name="robot_name" default="holybro" />
+    <arg name="init_x" default="0" />
+    <arg name="init_y" default="0" />
+    <arg name="init_z" default="2" />
+    <arg name="init_th" default="0" />
+    <arg name="set_ekf_origin" default="true" />
+    <arg name="uav_model_path" default="" /> <!-- put the path to your UAV model here-->
+
+    <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" output="screen" args="
+                -sdf
+                -file $(arg uav_model_path)
+                -model $(arg robot_name)
+                -x $(arg init_x) -y $(arg init_y) -z $(arg init_z) -Y $(arg init_th)" />
+
+    <node if="$(arg set_ekf_origin)" name="set_ekf_origin" pkg="holybro" type="set_ekf_origin.py" output="screen" />
+
+</launch>

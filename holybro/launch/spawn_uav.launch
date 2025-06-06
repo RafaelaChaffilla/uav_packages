@@ -1,0 +1,73 @@
+<launch>
+
+    <arg name="init_x" default="40.0"/>
+    <arg name="init_y" default="22.0"/>
+    <arg name="init_z" default="2"/>
+    <arg name="init_th" default="0"/>
+
+    <arg name="robot_name"        default="holybro" />
+    <arg name="ugv_pose_topic"    default="rovid/ekf_ugv" />
+
+    <arg name="launch_all" default="false" />
+    <arg name="corridors_to_visit" default="[4, 2]" />
+
+    <group if="$(arg launch_all)" >
+        <include file="$(find holybro)/launch/spawn_model.launch">
+            <arg name="init_x" value="$(arg init_x)" />
+            <arg name="init_y" value="$(arg init_y)" />
+            <arg name="init_z" value="$(arg init_z)" />
+            <arg name="init_th" value="$(arg init_th)" />
+        </include> 
+    </group>
+
+    <group ns="$(arg robot_name)">
+        <node pkg="holybro" type="spawn_uav_model.py" name="spawn_model_to_gazebo" output="screen">
+            <param name="ugv_pose_topic" value="/rovid/initial_position"/>
+        </node>
+    
+        <node pkg="tf2_ros" type="static_transform_publisher" name="camera_aruco_broadcaster" args="0.0 0.0 -0.06 0.7071068 -0.7071068 0 0 holybro_v1/base_link camera_color_optical_frame"/>
+        
+        <group>
+            <!-- writes position of pattern center in each fiducial frame-->
+            <node pkg="tf2_ros" type="static_transform_publisher" name="marker946_c_broadcaster" args="-0.107 0.014 0 0 0 0 1 fiducial_946 fiducial_C_946"/>
+            <node pkg="tf2_ros" type="static_transform_publisher" name="marker227_c_broadcaster" args="0.138 -0.072 0 0 0 0 1 fiducial_227 fiducial_C_227"/>
+            <node pkg="tf2_ros" type="static_transform_publisher" name="marker168_c_broadcaster" args="0.175 0.101 0 0 0 0 1 fiducial_168 fiducial_C_168"/>
+            <node pkg="tf2_ros" type="static_transform_publisher" name="marker55_c_broadcaster" args="0.084 0.115 0 0 0 0 1 fiducial_55 fiducial_C_55"/>
+            <node pkg="tf2_ros" type="static_transform_publisher" name="marker10_c_broadcaster" args="0.051 0.048 0 0 0 0 1 fiducial_10 fiducial_C_10"/>
+        </group> 
+
+        <!-- aruco detector -->
+        <node pkg="aruco_detect" name="aruco_detect" type="aruco_detect" output="screen" respawn="false">
+            <param name="image_transport" value="compressed"/>
+            <param name="publish_images" value="true" />
+            <param name="dictionary" value="3"/>
+            <param name="do_pose_estimation" value="true"/>
+            <param name="vis_msgs" value="false"/>
+            <param name="fiducial_len_override" value="0-50:0.03, 51-100:0.07, 101-200:0.1, 201-300:0.172, 901-1000:0.24"/>
+            <remap from="camera/compressed" to="webcam/image_raw/compressed" />
+            <remap from="camera_info" to="webcam/camera_info" />
+        </node>
+
+        <node pkg="pose_from_aruco" name="pose_from_aruco" type="pose_from_aruco_v6_gps.py" output="screen">
+            <param name="init_x" value="$(arg init_x)" />
+            <param name="init_y" value="$(arg init_y)" />
+            <param name="ugv_pose_topic" value="$(arg ugv_pose_topic)" />
+            <param name="camera_frame" value="camera_color_optical_frame" />
+        </node>
+
+        <node pkg="command_uav" name="set_flight_mode" type="set_mode_srv.py" output="screen">
+            <param name="init_x" value="$(arg init_x)" />
+            <param name="init_y" value="$(arg init_y)" />
+            <param name="ugv_pose_topic" value="$(arg ugv_pose_topic)" />
+        </node>
+
+        <include file="$(find ugv_state_machine)/launch/ugv_state_machine.launch">
+            <arg name="corridors_to_visit" default="$(arg corridors_to_visit)" />
+            <arg name="init_x" value="$(arg init_x)" />
+            <arg name="init_y" value="$(arg init_y)" />
+            <param name="ugv_pose_topic" value="$(arg ugv_pose_topic)" />
+        </include> 
+
+    </group>
+
+</launch>

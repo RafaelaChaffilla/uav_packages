@@ -1,0 +1,15 @@
+<launch>
+    <arg name="init_x" default="-11"/>
+	<arg name="init_y" default="-5.5"/>
+
+	<arg name="corridors_to_visit" default="[9, 10]" />
+
+	<arg name="config_file" default="sim_map_points" />
+	<rosparam file="$(find ugv_state_machine)/config/$(arg config_file).yaml" />
+
+	<node name="ugv_state_machine" output="screen" pkg="ugv_state_machine" type="ugv_state_machine.py">
+		<rosparam param="corridors_to_visit" subst_value="true">$(arg corridors_to_visit)</rosparam>
+		<param name="init_x" value="$(arg init_x)" />
+		<param name="init_y" value="$(arg init_y)" />
+	</node>
+</launch>
