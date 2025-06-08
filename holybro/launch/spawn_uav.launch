@@ -7,6 +7,7 @@
 
     <arg name="robot_name"        default="holybro" />
     <arg name="ugv_pose_topic"    default="rovid/ekf_ugv" />
+    <arg name="land_accuracy"     default="0.2" />
 
     <arg name="launch_all" default="false" />
     <arg name="corridors_to_visit" default="[4, 2]" />
@@ -59,6 +60,7 @@
             <param name="init_x" value="$(arg init_x)" />
             <param name="init_y" value="$(arg init_y)" />
             <param name="ugv_pose_topic" value="$(arg ugv_pose_topic)" />
+            <param name="land_accuracy" value="$(arg land_accuracy)" />
         </node>
 
         <include file="$(find ugv_state_machine)/launch/ugv_state_machine.launch">

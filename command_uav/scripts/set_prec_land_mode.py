@@ -90,6 +90,7 @@ class PrecLandCtrl():
                                                                                 [0.40, 0.40, 0.15, 0.0001], 
                                                                                 [0.35, 0.17, 0.40, 0.01], 
                                                                                 [0.15, 0.25, 0.50, 0.02]]))
+        self.land_accuracy = rospy.get_param("~land_accuracy", 0.2)  
         
         # Publishers
         self.pub_commands = rospy.Publisher('mavros/setpoint_velocity/cmd_vel_unstamped', Twist, queue_size=1)
@@ -309,7 +310,7 @@ class PrecLandCtrl():
             v_desired = np.sign(v_desired) * np.minimum(np.abs(v_desired), self.parameters_matrix[:, 0])
             
             # Confirm Landing only when error is bellow a threshold
-            if ((delta_t > 2*self.delta_t1[2] + self.delta_t2[2]) and (np.linalg.norm(error[0:2]) <= 0.2)):
+            if ((delta_t > 2*self.delta_t1[2] + self.delta_t2[2]) and (np.linalg.norm(error[0:2]) <= self.land_accuracy)):
                 self.publish_vel_command(np.zeros_like(v_desired))
                 self.finish_landing() 
                 return

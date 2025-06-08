@@ -5,6 +5,7 @@
     <arg name="init_th" default="0"/>
 
     <arg name="robot_name"    default="holybro" />
+    <arg name="land_accuracy"     default="0.2" />
 
     <group ns="$(arg robot_name)">
         <node pkg="tf2_ros" type="static_transform_publisher" name="camera_broadcaster" args="0.085 0.0 -0.11 0 0.707 0 0.707 holybro_v1/base_link camera_link" />
@@ -52,6 +53,7 @@
         <node pkg="command_uav" name="set_flight_mode" type="set_mode_srv.py" output="screen">
             <param name="init_x" value="$(arg init_x)" />
             <param name="init_y" value="$(arg init_y)" />
+            <param name="land_accuracy" value="$(arg land_accuracy)" />
         </node>
 
     </group>
